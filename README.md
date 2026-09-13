@@ -1,5 +1,15 @@
 # Bambu Admin
 
+> **Unofficial project.** This is an independent, community-made tool and is not affiliated with, endorsed by, or supported by Bambu Lab. Neither Bambu Lab nor the author of this project is responsible for any use made of it, especially if the project is modified. Use at your own risk. "Bambu Lab", "Bambu Studio", "AMS" and "Vortek" are trademarks of their respective owner, used here only to describe compatibility.
+>
+> The filament and hotend compatibility data (`src/data/filaments.js`, `src/data/hotends.js`, `src/data/compat.json`) was sourced from Bambu Lab's official website and wiki, but it is a manual snapshot, not a live sync — it is **not kept continuously up to date** with Bambu Lab's own documentation. Always double-check critical settings (temperatures, chamber requirements, hotend side) against the current official sources before printing.
+>
+> This app sends real commands (pause / resume / stop) to your printer over your local network. The author provides no warranty of any kind and accepts no liability for print failures, wasted material, or hardware damage resulting from its use — verify what you're doing before you confirm an action.
+>
+> The author is not responsible for any incompatibility, malfunction, or damage to your printer(s) or other hardware arising from the use of this app or its data. It is the user's responsibility to verify that the information shown (compatibility, settings, pricing) is accurate for their own equipment before acting on it.
+>
+> The Quotes / Tracking module is a cost estimator for internal use, not certified accounting or tax software; verify figures before sending them to a client. The printer's access code is stored in plain text on your own machine (`src/data/printer-config.json`, never committed) — protect that machine and network accordingly.
+
 Admin dashboard for a small 3D-printing workshop running Bambu Lab printers (all series). It combines live printer monitoring, a filament/hotend compatibility advisor, quoting & invoicing, and inventory tracking in a single local app. Available in French and English (toggle in the top bar).
 
 Using Vortek and dual-nozzle hotends unlocks multi-material printing but adds real print compatibility constraints — which hotend side a filament must use, whether the chamber needs to be closed, which materials can't be mixed in the same job. Getting these wrong wastes filament and print time. The built-in filament/hotend advisor exists to catch these mistakes before you hit print.
@@ -46,3 +56,7 @@ Production build: `npm run build` (output in `dist/`), previewed with `npm run p
 - **AMS write-back** — the Inventory page's printer AMS view is read-only by design; there's no way (yet) to push an inventory spool into an actual AMS slot from the app.
 - **Multi-user / auth** — the app assumes a single trusted local user; there's no login or permission system.
 - **Data portability** — quotes live in `localStorage` only (exportable to JSON on demand); no server-side backup/sync.
+
+## License
+
+[MIT](LICENSE) — see the disclaimer at the top of this file for the specific warranties this project does *not* provide.

@@ -1,0 +1,21 @@
+{
+  "materiau": "PLA Basic",
+  "coutFilament": 7,
+  "filamentReqs": 100,
+  "tempsImpression": 1,
+  "mainOeuvre": 10,
+  "fraisPort": 0,
+  "facteurEfficacite": 1.1,
+  "tauxHoraireMO": 10,
+  "prixImprimante": 1000,
+  "coutSupplementaire": 40,
+  "fraisMaintenanceAn": 40,
+  "dureeVie": 3,
+  "tauxDispo": 0.5,
+  "consommationW": 200,
+  "coutKwh": 0.2,
+  "facteurMarge": 1.3,
+  "marge1": 25,
+  "marge2": 30,
+  "marge3": 35
+}

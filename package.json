@@ -2,6 +2,7 @@
   "name": "bambu-admin",
   "private": true,
   "version": "1.0.0",
+  "license": "MIT",
   "description": "Admin dashboard for Bambu Lab printers: live MQTT monitoring, filament/hotend compatibility advisor, quoting and invoicing, and inventory management (spools & hotends).",
   "type": "module",
   "author": "Emmanuel ROMAIN",
@@ -9,9 +10,6 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/pulse-ware-hub/bambu-admin"
-  },
-  "bugs": {
-    "url": ""
   },
   "scripts": {
     "dev": "vite",

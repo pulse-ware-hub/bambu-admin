@@ -9,3 +9,7 @@ src/data/admin.json
 
 # État local de l'inventaire (pas du code, régénéré au runtime)
 src/data/inventaire.json
+
+# Paramètres de calcul de devis réels (tarifs, marges) — régénérés depuis
+# devis-parameters.default.json au premier lancement si absents
+src/data/devis-parameters.json

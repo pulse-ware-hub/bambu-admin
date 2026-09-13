@@ -3,13 +3,18 @@ import * as XLSX from "xlsx";
 import { upsertDevis, exportGlobalJSON, genId } from "./storage.js";
 import { T } from "./tokens.js";
 import ETATS_DATA from "./data/etats.json";
+import DEVIS_PARAMS_DEFAULT from "./data/devis-parameters.default.json";
 import { useLanguage } from "./LanguageContext.jsx";
 
 export const ETATS = ETATS_DATA;
 export const ETATS_SUIVI = ["preparation", "expedie"];
 
 // ─── ÉTAT INITIAL ─────────────────────────────────────────────
-function makeInitialForm() {
+// Les valeurs de tarification (coûts, marges…) viennent de
+// /api/devis-parameters (src/data/devis-parameters.json, gitignoré —
+// propre à chaque installation). DEVIS_PARAMS_DEFAULT n'est qu'un
+// filet de sécurité pour le tout premier rendu, avant la réponse API.
+function makeInitialForm(params = DEVIS_PARAMS_DEFAULT) {
   return {
     // Identifiants
     id:      null,   // uuid interne (timestamp)
@@ -26,35 +31,35 @@ function makeInitialForm() {
     client:      "",
 
     // Matériau principal
-    materiau:         "PLA Basic",
-    coutFilament:     14,
-    filamentReqs:     100,
-    tempsImpression:  1,
-    mainOeuvre:       10,
+    materiau:         params.materiau,
+    coutFilament:     params.coutFilament,
+    filamentReqs:     params.filamentReqs,
+    tempsImpression:  params.tempsImpression,
+    mainOeuvre:       params.mainOeuvre,
 
     // Matériaux additionnels (7 lignes)
     materiaux: Array(7).fill(null).map(() => ({ nom: "", qte: "", prixUnit: "" })),
 
     // Emballage (7 lignes)
     emballages: Array(7).fill(null).map(() => ({ nom: "", qte: "", prixUnit: "" })),
-    fraisPort: 0,
+    fraisPort: params.fraisPort,
 
     // Entrées avancées
-    facteurEfficacite:  1.1,
-    tauxHoraireMO:      20,
-    prixImprimante:     2323,
-    coutSupplementaire: 96,
-    fraisMaintenanceAn: 100,
-    dureeVie:           3,
-    tauxDispo:          0.5,
-    consommationW:      200,
-    coutKwh:            0.2,
-    facteurMarge:       1.3,
+    facteurEfficacite:  params.facteurEfficacite,
+    tauxHoraireMO:      params.tauxHoraireMO,
+    prixImprimante:     params.prixImprimante,
+    coutSupplementaire: params.coutSupplementaire,
+    fraisMaintenanceAn: params.fraisMaintenanceAn,
+    dureeVie:           params.dureeVie,
+    tauxDispo:          params.tauxDispo,
+    consommationW:      params.consommationW,
+    coutKwh:            params.coutKwh,
+    facteurMarge:       params.facteurMarge,
 
     // Marges suggérées
-    marge1: 50,
-    marge2: 60,
-    marge3: 70,
+    marge1: params.marge1,
+    marge2: params.marge2,
+    marge3: params.marge3,
   };
 }
 
@@ -349,9 +354,19 @@ export default function DevisPage({ editEntry, onSaved }) {
     f.numero = null; // sera généré à l'enregistrement
     return f;
   });
+  const [params, setParams]   = useState(DEVIS_PARAMS_DEFAULT);
   const [showAdv, setShowAdv] = useState(false);
   const [toast, setToast]     = useState(null);
   const calc = compute(form);
+
+  // Charge les vrais paramètres de tarification (propres à cette installation) ;
+  // remplace le filet de sécurité utilisé pour le tout premier rendu.
+  useEffect(() => {
+    fetch("/api/devis-parameters").then(r => r.json()).then(p => {
+      setParams(p);
+      if (!editEntry) setForm(f => ({ ...makeInitialForm(p), id: f.id, numero: f.numero }));
+    }).catch(() => {});
+  }, []);
 
   // Rechargement si on édite un autre devis
   useEffect(() => {
@@ -693,7 +708,7 @@ export default function DevisPage({ editEntry, onSaved }) {
             </div>
 
             <button onClick={() => {
-              const f = makeInitialForm();
+              const f = makeInitialForm(params);
               f.id     = Date.now().toString();
               f.numero = null;
               setForm(f);

@@ -11,6 +11,8 @@ import mqtt              from 'mqtt'
 const INVENTAIRE_FILE    = path.resolve('./src/data/inventaire.json')
 const PRINTER_CFG_FILE   = path.resolve('./src/data/printer-config.json')
 const ADMIN_FILE   = path.resolve('./src/data/admin.json')
+const DEVIS_PARAMS_FILE         = path.resolve('./src/data/devis-parameters.json')
+const DEVIS_PARAMS_DEFAULT_FILE = path.resolve('./src/data/devis-parameters.default.json')
 
 // ─────────────────────────────────────────────────────────────
 // Inventaire API  (src/data/inventaire.json)
@@ -38,6 +40,32 @@ function inventaireApiPlugin() {
             } catch { res.statusCode = 400; res.end(JSON.stringify({ error: 'Écriture impossible' })) }
           })
         } else { res.statusCode = 405; res.end() }
+      })
+    },
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Devis parameters API  (src/data/devis-parameters.json)
+// Fichier gitignoré (données de tarification réelles) — recopié
+// depuis devis-parameters.default.json au premier accès s'il manque.
+// ─────────────────────────────────────────────────────────────
+function devisParamsApiPlugin() {
+  return {
+    name: 'devis-params-api',
+    configureServer(server) {
+      server.middlewares.use('/api/devis-parameters', (req, res) => {
+        res.setHeader('Content-Type', 'application/json')
+        if (req.method !== 'GET') { res.statusCode = 405; res.end(); return }
+        try {
+          if (!fs.existsSync(DEVIS_PARAMS_FILE)) {
+            fs.copyFileSync(DEVIS_PARAMS_DEFAULT_FILE, DEVIS_PARAMS_FILE)
+          }
+          res.end(fs.readFileSync(DEVIS_PARAMS_FILE, 'utf-8'))
+        } catch {
+          res.statusCode = 500
+          res.end(JSON.stringify({ error: 'Lecture impossible' }))
+        }
       })
     },
   }
@@ -406,6 +434,7 @@ export default defineConfig({
   plugins: [
     react(),
     inventaireApiPlugin(),
+    devisParamsApiPlugin(),
     adminProxyPlugin(),
     bambuMqttPlugin(),
   ],
