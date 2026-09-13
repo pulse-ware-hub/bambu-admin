@@ -399,6 +399,8 @@ export const STRINGS = {
     "inv.fil.noAms": "Pas d'AMS détecté",
     "inv.fil.externalSpool": "Bobine externe",
     "inv.fil.modalAmsNote": "ℹ️ L'ajout d'un filament via « Ajouter » alimente uniquement l'inventaire — il ne modifie pas le contenu réel des AMS.",
+    "inv.fil.humidityGuide": "Guide humidité",
+    "inv.fil.humidityGuideNote": "Repère d'humidité relative (RH) de stockage recommandée par famille de filament (valeurs indicatives).",
   },
   en: {
     "theme.light": "Light",
@@ -798,5 +800,7 @@ export const STRINGS = {
     "inv.fil.noAms": "No AMS detected",
     "inv.fil.externalSpool": "External spool",
     "inv.fil.modalAmsNote": "ℹ️ Adding a filament via \"Add\" only feeds the inventory — it does not change the actual AMS contents.",
+    "inv.fil.humidityGuide": "Humidity guide",
+    "inv.fil.humidityGuideNote": "Recommended storage relative humidity (RH) reference by filament family (indicative values).",
   },
 };

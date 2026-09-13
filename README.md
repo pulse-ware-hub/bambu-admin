@@ -2,9 +2,11 @@
 
 Admin dashboard for a small 3D-printing workshop running Bambu Lab printers (all series). It combines live printer monitoring, a filament/hotend compatibility advisor, quoting & invoicing, and inventory tracking in a single local app. Available in French and English (toggle in the top bar).
 
+Using Vortek and dual-nozzle hotends unlocks multi-material printing but adds real print compatibility constraints — which hotend side a filament must use, whether the chamber needs to be closed, which materials can't be mixed in the same job. Getting these wrong wastes filament and print time. The built-in filament/hotend advisor exists to catch these mistakes before you hit print.
+
 ## Features
 
-- **Printer** — Live status of your configured Bambu Lab printer(s) over local MQTT (`mqtts://`, LAN mode): print progress, temperatures, AMS spools, HMS alerts, pause/resume/stop controls. Supports multiple printers, each with its own model, enclosure/nozzle characteristics and Vertex (dual Vortek hotend) flag.
+- **Printer** — Add as many Bambu Lab printers as you run and switch between them via tabs to follow each one's live activity over local MQTT (`mqtts://`, LAN mode): print progress, temperatures, AMS spools, HMS alerts, pause/resume/stop controls. Each printer keeps its own model, enclosure/nozzle characteristics and Vertex (dual Vortek hotend) flag.
 - **Filaments** — Advisor that recommends filaments based on environment, use case and nozzle, with full print settings, warnings, and Vortek hotend guidance. Results are automatically filtered by the capabilities (enclosure, dual nozzle) of the printer selected in the top bar.
 - **Hotends & Nozzles** — Compatibility matrix between filaments and hotends (Induction, High Flow, Tungsten Carbide, TPU-dedicated), H2C wiring rules, and indicative pricing.
 - **Quotes** — Cost calculator for a printed part (filament, labor, packaging, machine amortization) with saved revisions, Excel and printable PDF export.

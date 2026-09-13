@@ -425,6 +425,56 @@ function PrinterAmsCard({ p, status, t }) {
   );
 }
 
+const HUMIDITY_GUIDE = [
+  { id: "PLA",   rh: "15–25%", color: "#4ade80" },
+  { id: "ABS",   rh: "15–25%", color: "#fbbf24" },
+  { id: "PETG",  rh: "10–15%", color: "#60a5fa" },
+  { id: "TPU",   rh: "10–15%", color: "#34d399" },
+  { id: "Nylon", rh: "10–15%", color: "#e879f9" },
+  { id: "PC",    rh: "10–15%", color: "#a78bfa" },
+];
+
+function SpoolIcon({ color }) {
+  return (
+    <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+      <circle cx="17" cy="17" r="15" stroke={color} strokeOpacity="0.35" strokeWidth="1.5" />
+      <circle cx="17" cy="17" r="10" stroke={color} strokeWidth="6" />
+      <circle cx="17" cy="17" r="3" fill={color} />
+    </svg>
+  );
+}
+
+function HumidityArc({ color }) {
+  return (
+    <svg width="64" height="34" viewBox="0 0 64 34" fill="none">
+      <path d="M4 32 A28 28 0 0 1 60 32" stroke={color} strokeOpacity="0.18" strokeWidth="5" strokeLinecap="round" />
+      <path d="M4 32 A28 28 0 0 1 60 32" stroke={color} strokeWidth="5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function HumidityCard({ id, rh, color }) {
+  return (
+    <div style={{
+      border: `1px solid ${color}35`, borderRadius: 10, padding: "10px 8px",
+      background: `${color}0c`, display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+    }}>
+      <div style={{ fontSize: 11, fontWeight: 600, color: T.text, letterSpacing: "0.03em" }}>{id}</div>
+      <HumidityArc color={color} />
+      <div style={{ fontSize: 12, fontWeight: 600, color, marginTop: -2 }}>{rh}</div>
+      <div style={{ fontSize: 9, color: T.dim, letterSpacing: "0.1em" }}>RH</div>
+    </div>
+  );
+}
+
+function HumidityGuide() {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(90px,1fr))", gap: 8 }}>
+      {HUMIDITY_GUIDE.map(m => <HumidityCard key={m.id} {...m} />)}
+    </div>
+  );
+}
+
 function PrintersAmsOverview() {
   const { t } = useLanguage();
   const [printers, setPrinters] = useState([]);
@@ -452,10 +502,7 @@ function PrintersAmsOverview() {
   }, [printers]);
 
   return (
-    <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: "18px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: T.dim, textTransform: "uppercase", letterSpacing: "0.09em" }}>
-        {t("inv.fil.printersTitle")}
-      </div>
+    <div style={{ background: "none", border: `none`, padding: "0px 0px", display: "flex", flexDirection: "column", gap: 12 }}>
       {printers.length === 0 ? (
         <div style={{ fontSize: 12, color: T.dim, fontStyle: "italic" }}>{t("inv.fil.noPrinters")}</div>
       ) : (
@@ -472,6 +519,8 @@ function FilamentsTab({ filaments, onSave }) {
   const [modal, setModal]     = useState(null);
   const [confirm, setConfirm] = useState(null);
   const [form, setForm]       = useState({});
+  const [showHumidityGuide, setShowHumidityGuide] = useState(false);
+  const [showPrinters, setShowPrinters] = useState(false);
 
   const openAdd = () => {
     const cat = FILAMENTS[0];
@@ -511,8 +560,32 @@ function FilamentsTab({ filaments, onSave }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
 
+      {/* ── Guide humidité ── */}
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <button onClick={() => setShowHumidityGuide(v => !v)} style={{
+          padding: "7px 14px", borderRadius: 8, cursor: "pointer", fontSize: 12, fontWeight: 700,
+          background: showHumidityGuide ? T.accentLo : "rgba(255,255,255,0.02)",
+          border: `1px solid ${showHumidityGuide ? T.accentBd : T.border}`,
+          color: showHumidityGuide ? "#7182d6" : T.muted,
+        }}>💧 {t("inv.fil.humidityGuide")}</button>
+      </div>
+      {showHumidityGuide && (
+        <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+          <HumidityGuide />
+          <div style={{ fontSize: 10, color: T.dim }}>{t("inv.fil.humidityGuideNote")}</div>
+        </div>
+      )}
+
       {/* ── AMS imprimantes (live, lecture seule) ── */}
-      <PrintersAmsOverview />
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <button onClick={() => setShowPrinters(v => !v)} style={{
+          padding: "7px 14px", borderRadius: 8, cursor: "pointer", fontSize: 12, fontWeight: 700,
+          background: showPrinters ? T.accentLo : "rgba(255,255,255,0.02)",
+          border: `1px solid ${showPrinters ? T.accentBd : T.border}`,
+          color: showPrinters ? "#7182d6" : T.muted,
+        }}>🖨️ {t("inv.fil.printersTitle")}</button>
+      </div>
+      {showPrinters && <PrintersAmsOverview />}
 
       {/* ── List ── */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
