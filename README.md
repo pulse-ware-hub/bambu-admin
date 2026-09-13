@@ -1,6 +1,6 @@
 # Bambu Admin
 
-Admin dashboard for a small 3D-printing workshop running Bambu Lab printers (H2C / H2 series). It combines live printer monitoring, a filament/hotend compatibility advisor, quoting & invoicing, and inventory tracking in a single local app. Available in French and English (toggle in the top bar).
+Admin dashboard for a small 3D-printing workshop running Bambu Lab printers (all series). It combines live printer monitoring, a filament/hotend compatibility advisor, quoting & invoicing, and inventory tracking in a single local app. Available in French and English (toggle in the top bar).
 
 ## Features
 
