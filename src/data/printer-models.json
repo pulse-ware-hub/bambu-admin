@@ -1,0 +1,14 @@
+[
+  { "name": "A1 mini",            "series": "A1", "enclosure": "not_enclose", "nozzle": "single_nozzle", "factoryUpgrade": "",       "optionalUpgrade": "" },
+  { "name": "A1",                 "series": "A1", "enclosure": "not_enclose", "nozzle": "single_nozzle", "factoryUpgrade": "",       "optionalUpgrade": "" },
+  { "name": "A2L",                "series": "A2", "enclosure": "not_enclose", "nozzle": "single_nozzle", "factoryUpgrade": "",       "optionalUpgrade": "" },
+  { "name": "P1P",                "series": "P1", "enclosure": "enclosed",    "nozzle": "single_nozzle", "factoryUpgrade": "",       "optionalUpgrade": "enclosure_kit_possible" },
+  { "name": "P1S",                "series": "P1", "enclosure": "enclosed",    "nozzle": "single_nozzle", "factoryUpgrade": "",       "optionalUpgrade": "" },
+  { "name": "P2S",                "series": "P2", "enclosure": "enclosed",    "nozzle": "single_nozzle", "factoryUpgrade": "",       "optionalUpgrade": "" },
+  { "name": "X1 Carbon (X1C)",    "series": "X1", "enclosure": "enclosed",    "nozzle": "single_nozzle", "factoryUpgrade": "",       "optionalUpgrade": "" },
+  { "name": "X1E",                "series": "X1", "enclosure": "enclosed",    "nozzle": "single_nozzle", "factoryUpgrade": "",       "optionalUpgrade": "" },
+  { "name": "H2S",                "series": "H2", "enclosure": "enclosed",    "nozzle": "single_nozzle", "factoryUpgrade": "",       "optionalUpgrade": "" },
+  { "name": "X2D",                "series": "X2", "enclosure": "enclosure",   "nozzle": "dual_nozzle",   "factoryUpgrade": "",       "optionalUpgrade": "vortek_upgrade_kit_possible" },
+  { "name": "H2D",                "series": "H2", "enclosure": "enclosure",   "nozzle": "dual_nozzle",   "factoryUpgrade": "vortek", "optionalUpgrade": "" },
+  { "name": "H2C",                "series": "H2", "enclosure": "enclosure",   "nozzle": "dual_nozzle",   "factoryUpgrade": "vortek", "optionalUpgrade": "" }
+]

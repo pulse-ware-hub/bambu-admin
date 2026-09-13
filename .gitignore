@@ -1,0 +1,11 @@
+node_modules
+dist
+.DS_Store
+.claude/settings.local.json
+
+# Config locale sensible (code d'accès imprimante, IP) — régénérée au premier lancement
+src/data/printer-config.json
+src/data/admin.json
+
+# État local de l'inventaire (pas du code, régénéré au runtime)
+src/data/inventaire.json

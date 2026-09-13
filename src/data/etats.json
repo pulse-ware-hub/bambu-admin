@@ -1,0 +1,10 @@
+[
+  { "id": "devis",             "label": { "fr": "Devis",                       "en": "Quote" },              "color": "#64748b" },
+  { "id": "accepte",           "label": { "fr": "Devis accepté",               "en": "Quote accepted" },     "color": "#06b6d4" },
+  { "id": "en_cours",          "label": { "fr": "En cours",                    "en": "In progress" },        "color": "#6366f1" },
+  { "id": "preparation",       "label": { "fr": "En préparation d'expédition", "en": "Preparing shipment" }, "color": "#f97316" },
+  { "id": "expedie",           "label": { "fr": "Expédié",                     "en": "Shipped" },            "color": "#8b5cf6" },
+  { "id": "facturation",       "label": { "fr": "Facturation",                "en": "Invoicing" },          "color": "#fbbf24" },
+  { "id": "attente_reglement", "label": { "fr": "Attente de règlement",        "en": "Awaiting payment" },   "color": "#f59e0b" },
+  { "id": "regle",             "label": { "fr": "Réglé",                      "en": "Paid" },               "color": "#10b981" }
+]

@@ -1,0 +1,32 @@
+{
+  "name": "bambu-admin",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Admin dashboard for Bambu Lab printers: live MQTT monitoring, filament/hotend compatibility advisor, quoting and invoicing, and inventory management (spools & hotends).",
+  "type": "module",
+  "author": "Emmanuel ROMAIN",
+  "homepage": "https://github.com/pulse-ware-hub",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "bugs": {
+    "url": ""
+  },
+  "scripts": {
+    "dev": "vite",
+    "prod": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "mqtt": "^5.15.1",
+    "vite": "^5.4.2"
+  }
+}

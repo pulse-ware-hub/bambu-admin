@@ -1,0 +1,11 @@
+[
+  { "id": "imprimante",  "label": { "fr": "Imprimante",      "en": "Printer" },      "icon": "🖨️", "desc": { "fr": "BambuLab · État live",                       "en": "BambuLab · Live status" } },
+  { "id": "inventaire",  "label": { "fr": "Inventaire",      "en": "Inventory" },    "icon": "📦", "desc": { "fr": "Stock hotends & bobines",                    "en": "Hotend & spool stock" } },
+  { "id": "filament",    "label": { "fr": "Filaments",       "en": "Filaments" },    "icon": "🧵", "desc": { "fr": "Conseils",                                   "en": "Advisor" } },
+  { "id": "hotend",      "label": { "fr": "Hotends & Buses", "en": "Hotends & Nozzles" }, "icon": "🔩", "desc": { "fr": "Compatibilité · Vortek · Tarifs",       "en": "Compatibility · Vortek · Pricing" } },
+  { "id": "prix",        "label": { "fr": "Prix pièce",      "en": "Part price" },   "icon": "🏷️", "desc": { "fr": "Calcul coût impression",                     "en": "Print cost calculation" } },
+  { "id": "devis",       "label": { "fr": "Devis",           "en": "Quotes" },       "icon": "📋", "desc": { "fr": "Génération devis client",                    "en": "Client quote generation" } },
+  { "id": "suivi",       "label": { "fr": "Suivi",           "en": "Tracking" },     "icon": "📊", "desc": { "fr": "Tous les devis · états · relances",          "en": "All quotes · statuses · reminders" } },
+  { "id": "facture",     "label": { "fr": "Factures",        "en": "Invoices" },     "icon": "🧾", "desc": { "fr": "Facturation & suivi",                        "en": "Invoicing & tracking" } },
+  { "id": "maintenance", "label": { "fr": "Maintenance",     "en": "Maintenance" },  "icon": "🔧", "desc": { "fr": "Suivi machines & entretien",                 "en": "Machine tracking & upkeep" } }
+]

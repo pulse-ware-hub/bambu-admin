@@ -1,0 +1,10 @@
+[
+  { "id": "indoor",          "label": { "fr": "Intérieur standard",     "en": "Standard indoor" },      "icon": "🏠", "desc": { "fr": "Température ambiante",          "en": "Room temperature" } },
+  { "id": "light_outdoor",   "label": { "fr": "Semi-extérieur",         "en": "Semi-outdoor" },          "icon": "🌤", "desc": { "fr": "Abrité, légère exposition",     "en": "Sheltered, light exposure" } },
+  { "id": "outdoor",         "label": { "fr": "Extérieur plein air",    "en": "Full outdoor" },          "icon": "🌦", "desc": { "fr": "Pluie, UV, chaleur",            "en": "Rain, UV, heat" } },
+  { "id": "uv",              "label": { "fr": "Forte exposition UV",    "en": "High UV exposure" },      "icon": "☀️", "desc": { "fr": "Soleil direct prolongé",        "en": "Prolonged direct sunlight" } },
+  { "id": "humid",           "label": { "fr": "Humidité / eau",         "en": "Humidity / water" },      "icon": "💧", "desc": { "fr": "Milieu humide ou immersion",    "en": "Humid environment or immersion" } },
+  { "id": "indoor_high_temp","label": { "fr": "Haute température",      "en": "High temperature" },      "icon": "🔥", "desc": { "fr": "+60°C, moteur, électronique",   "en": "+60°C, engine, electronics" } },
+  { "id": "industrial",      "label": { "fr": "Industriel / production","en": "Industrial / production" },"icon": "🏭","desc": { "fr": "Contraintes chimiques",         "en": "Chemical constraints" } },
+  { "id": "low_temp",        "label": { "fr": "Usage normal (<50°C)",   "en": "Normal use (<50°C)" },    "icon": "❄️","desc": { "fr": "Intérieur classique",           "en": "Typical indoor" } }
+]

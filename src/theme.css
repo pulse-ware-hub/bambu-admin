@@ -1,0 +1,116 @@
+/* ================================================================
+   DESIGN TOKENS — light (default) & dark
+   ================================================================ */
+
+:root {
+  /* Backgrounds */
+  --color-bg:      #FDFDFC;
+  --color-surface: #F0F0EE;
+  --color-card:    #FFFFFF;
+
+  /* Borders */
+  --color-border:    rgba(0, 0, 0, 0.08);
+  --color-border-hi: rgba(99, 102, 241, 0.35);
+
+  /* Text */
+  --color-text:  #1a1a2e;
+  --color-muted: #64748b;
+  --color-dim:   #94a3b8;
+
+  /* Overlays (semi-transparent neutral) */
+  --color-overlay-1: rgba(0, 0, 0, 0.02);
+  --color-overlay-2: rgba(0, 0, 0, 0.04);
+  --color-overlay-3: rgba(0, 0, 0, 0.08);
+
+  /* Accent (unchanged across themes) */
+  --color-accent:    #6366f1;
+  --color-accent-lo: rgba(99, 102, 241, 0.12);
+  --color-accent-bd: rgba(99, 102, 241, 0.25);
+
+  /* Semantic colours (unchanged across themes) */
+  --color-gold:   #fbbf24;
+  --color-red:    #ef4444;
+  --color-green:  #10b981;
+  --color-orange: #f97316;
+  --color-cyan:   #06b6d4;
+  --color-purple: #8b5cf6;
+}
+
+.dark {
+  /* Backgrounds */
+  --color-bg:      #0D0D0F;
+  --color-surface: #0c1118;
+  --color-card:    #111827;
+
+  /* Borders */
+  --color-border:    rgba(255, 255, 255, 0.07);
+  --color-border-hi: rgba(99, 102, 241, 0.35);
+
+  /* Text */
+  --color-text:  #e2e8f0;
+  --color-muted: #8393a9;
+  --color-dim:   #475569;
+
+  /* Overlays */
+  --color-overlay-1: rgba(255, 255, 255, 0.02);
+  --color-overlay-2: rgba(255, 255, 255, 0.04);
+  --color-overlay-3: rgba(0, 0, 0, 0.20);
+}
+
+/* ================================================================
+   BASE RESET
+   ================================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: 'Inter', 'SF Pro Display', system-ui, sans-serif;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+/* ================================================================
+   SCROLLBARS
+   ================================================================ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+/* ================================================================
+   ANIMATIONS
+   ================================================================ */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ================================================================
+   FORM ELEMENTS — reset base styles
+   ================================================================ */
+button, input, select {
+  font-family: inherit;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: var(--date-icon-filter, none);
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}

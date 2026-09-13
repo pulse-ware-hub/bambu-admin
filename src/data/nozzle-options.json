@@ -1,0 +1,9 @@
+[
+  { "id": "0.4mm",      "label": { "fr": "0.4mm Standard",    "en": "0.4mm Standard" },     "detail": { "fr": "Acier trempé — défaut",         "en": "Hardened steel — default" },        "isDefault": true  },
+  { "id": "0.2mm",      "label": { "fr": "0.2mm Standard",    "en": "0.2mm Standard" },     "detail": { "fr": "Acier trempé — détails fins",   "en": "Hardened steel — fine detail" },    "isDefault": false },
+  { "id": "0.6mm",      "label": { "fr": "0.6mm Standard",    "en": "0.6mm Standard" },     "detail": { "fr": "Acier trempé — CF/fibres",      "en": "Hardened steel — CF/fibers" },      "isDefault": false },
+  { "id": "0.8mm",      "label": { "fr": "0.8mm Standard",    "en": "0.8mm Standard" },     "detail": { "fr": "Acier trempé — grandes pièces", "en": "Hardened steel — large parts" },    "isDefault": false },
+  { "id": "0.4mm_HF",   "label": { "fr": "0.4mm High Flow",   "en": "0.4mm High Flow" },    "detail": { "fr": "Débit +62%",                    "en": "+62% flow" },                       "isDefault": false },
+  { "id": "0.6mm_HF",   "label": { "fr": "0.6mm High Flow",   "en": "0.6mm High Flow" },    "detail": { "fr": "Débit maximal",                 "en": "Maximum flow" },                    "isDefault": false },
+  { "id": "TPU_hotend", "label": { "fr": "TPU Hotend (droit)","en": "TPU Hotend (right)" }, "detail": { "fr": "Flexibles uniquement",          "en": "Flexibles only" },                  "isDefault": false }
+]
