@@ -2,9 +2,19 @@ import { useState, useEffect, useCallback } from "react";
 import { T } from "./tokens.js";
 import { HOTENDS } from "./data/hotends.js";
 import { FILAMENTS } from "./data/filaments.js";
+import { HOTEND_COLORS, NOZZLE_SIZES } from "./data/hotend-colors.js";
+import PRINTER_MODELS from "./data/printer-models.json";
 import { useLanguage } from "./LanguageContext.jsx";
 
 // ── API ───────────────────────────────────────────────────────
+async function loadPrinters() {
+  try {
+    const res = await fetch("/api/printers");
+    if (!res.ok) return [];
+    return res.json();
+  } catch { return []; }
+}
+
 async function loadInv() {
   const res = await fetch("/api/inventaire");
   if (!res.ok) return { hotends: [], filaments: [] };
@@ -65,15 +75,38 @@ function Inp({ value, onChange, placeholder, type = "text" }) {
   );
 }
 
-function Sel({ value, onChange, children }) {
+function Sel({ value, onChange, children, disabled = false }) {
   return (
-    <select value={value ?? ""} onChange={e => onChange(e.target.value)} style={{
+    <select value={value ?? ""} onChange={e => onChange(e.target.value)} disabled={disabled} style={{
       padding: "8px 10px", borderRadius: 8, fontSize: 13,
       background: T.surface, border: `1px solid ${T.border}`,
-      color: T.text, outline: "none", cursor: "pointer", width: "100%",
+      color: T.text, outline: "none", cursor: disabled ? "not-allowed" : "pointer", width: "100%",
+      opacity: disabled ? 0.6 : 1,
     }}>
       {children}
     </select>
+  );
+}
+
+function ColorSwatchPicker({ value, onChange, lang }) {
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+      {HOTEND_COLORS.map(c => {
+        const selected = (value || "").toLowerCase() === c.hex.toLowerCase();
+        return (
+          <button
+            key={c.id} type="button" onClick={() => onChange(c.hex)}
+            title={c.label[lang] || c.label.fr}
+            style={{
+              width: 26, height: 26, borderRadius: "50%", cursor: "pointer",
+              background: c.hex, border: selected ? `2px solid ${T.text}` : `1px solid ${T.border}`,
+              boxShadow: selected ? `0 0 0 2px ${c.hex}55` : "none",
+              padding: 0,
+            }}
+          />
+        );
+      })}
+    </div>
   );
 }
 
@@ -100,29 +133,111 @@ function BtnCancel({ onClick }) {
 // ═══════════════════════════════════════════════════════════════
 // HOTENDS TAB
 // ═══════════════════════════════════════════════════════════════
+function printerKind(printer) {
+  const model = PRINTER_MODELS.find(m => m.name === printer.model);
+  if (!model) return null;
+  if (model.nozzle === "single_nozzle") return "single";
+  // Le kit Vortek est de série sur certains modèles (H2D/H2C) — dans ce cas
+  // il est toujours actif, indépendamment du flag "vertex" enregistré (qui ne
+  // reflète que le kit optionnel, ex. X2D).
+  const hasVortex = model.factoryUpgrade === "vortek" || !!printer.vertex;
+  return hasVortex ? "vortex" : "dual";
+}
+
+function slotsForKind(kind, t) {
+  if (kind === "single") {
+    return [{ key: "single", label: t("inv.hotend.slotSingle"), desc: t("inv.hotend.slotSingleDesc"), icon: "●" }];
+  }
+  const left = { key: "left", label: t("inv.hotend.slotLeft"), desc: t("inv.hotend.slotLeftDesc"), icon: "◀" };
+  if (kind === "dual") {
+    return [left, { key: "right", label: t("inv.hotend.slotRight"), desc: t("inv.hotend.slotRightDesc"), icon: "▶" }];
+  }
+  if (kind === "vortex") {
+    const vortexSlots = Array.from({ length: 6 }, (_, i) => ({
+      key: `vortex${i + 1}`,
+      label: `${t("inv.hotend.slotVortexPrefix")} ${i + 1}`,
+      desc: "",
+      icon: "V",
+    }));
+    return [left, ...vortexSlots];
+  }
+  return [];
+}
+
+function locationLabel(h, printers, t) {
+  if (!h.location || h.location === "stock") return t("inv.hotend.locStock");
+  const printer = printers.find(p => p.id === h.printerId);
+  const printerName = printer?.name || printer?.model || "?";
+  let slotLabel;
+  if (h.location === "left") slotLabel = t("inv.hotend.locLeft");
+  else if (h.location === "right") slotLabel = t("inv.hotend.locRight");
+  else if (h.location === "single") slotLabel = t("inv.hotend.locSingle");
+  else if (h.location.startsWith("vortex")) slotLabel = `${t("inv.hotend.locVortek")} ${h.location.slice(6)}`;
+  else slotLabel = h.location;
+  return `${printerName} · ${slotLabel}`;
+}
+
 function HotendsTab({ hotends, onSave }) {
   const { t, lang } = useLanguage();
   const [modal, setModal]   = useState(null);
   const [confirm, setConfirm] = useState(null);
   const [form, setForm]     = useState({});
+  const [printers, setPrinters] = useState([]);
 
-  const vortek  = hotends.find(h => h.location === "vortek");
-  const left    = hotends.find(h => h.location === "left");
-  const inStock = hotends.filter(h => h.location === "stock");
+  useEffect(() => {
+    let cancelled = false;
+    loadPrinters().then(list => { if (!cancelled) setPrinters(list); });
+    return () => { cancelled = true; };
+  }, []);
 
-  const applyLocation = (entries, targetId, location) =>
-    entries.map(h => {
-      if (h.id === targetId) return { ...h, location };
-      if ((location === "vortek" || location === "left") && h.location === location)
-        return { ...h, location: "stock" };
+  // Migration des anciennes entrées ("vortek"/"left" sans printerId) vers le nouveau modèle multi-imprimantes.
+  useEffect(() => {
+    if (printers.length === 0) return;
+    const needsMigration = hotends.some(h =>
+      h.location === "vortek" || (h.location && h.location !== "stock" && h.printerId == null)
+    );
+    if (!needsMigration) return;
+    const defaultPrinterId = printers[0].id;
+    const migrated = hotends.map(h => {
+      if (h.location === "vortek") return { ...h, location: "vortex1", printerId: h.printerId || defaultPrinterId };
+      if (h.location && h.location !== "stock" && h.printerId == null) return { ...h, printerId: defaultPrinterId };
       return h;
     });
+    onSave(migrated);
+  }, [printers, hotends]);
 
-  const setLocation = (id, loc) => onSave(applyLocation(hotends, id, loc));
+  // Backfill du champ "side" (gauche/droite) sur les anciennes entrées à partir du catalogue.
+  useEffect(() => {
+    const needsSide = hotends.some(h => h.side == null && HOTENDS.some(c => c.id === h.catalogId));
+    if (!needsSide) return;
+    const updated = hotends.map(h => {
+      if (h.side != null) return h;
+      const cat = HOTENDS.find(c => c.id === h.catalogId);
+      return cat ? { ...h, side: cat.side } : h;
+    });
+    onSave(updated);
+  }, [hotends]);
+
+  const inStock = hotends.filter(h => h.location === "stock" || !h.location);
+  const inStockForSlot = (slotKey) => {
+    if (slotKey === "single") return inStock;
+    const side = slotKey === "left" ? "left" : "right";
+    return inStock.filter(h => !h.side || h.side === side);
+  };
+
+  const assignSlot = (id, printerId, slotKey) => {
+    const updated = hotends.map(h => {
+      if (h.id === id) return { ...h, printerId, location: slotKey };
+      if (slotKey !== "stock" && h.printerId === printerId && h.location === slotKey) return { ...h, printerId: undefined, location: "stock" };
+      return h;
+    });
+    onSave(updated);
+  };
+  const removeFromSlot = (id) => assignSlot(id, undefined, "stock");
 
   const openAdd = () => {
     const cat = HOTENDS[0];
-    setForm({ catalogId: cat.id, name: cat.name[lang], color: cat.color, location: "stock", notes: "" });
+    setForm({ catalogId: cat.id, name: cat.name[lang], color: cat.color, side: cat.side, size: NOZZLE_SIZES[1], notes: "" });
     setModal({ mode: "add" });
   };
 
@@ -131,107 +246,127 @@ function HotendsTab({ hotends, onSave }) {
   const handleSave = () => {
     const cat = HOTENDS.find(h => h.id === form.catalogId);
     const entry = {
-      id:       modal.mode === "edit" ? modal.id : uid(),
+      id:        modal.mode === "edit" ? modal.id : uid(),
       catalogId: form.catalogId || "custom",
-      name:     form.name  || cat?.name?.[lang]  || "Hotend",
-      color:    form.color || cat?.color || "#6366f1",
-      location: form.location || "stock",
-      notes:    form.notes || "",
+      name:      form.name  || cat?.name?.[lang]  || "Hotend",
+      color:     form.color || cat?.color || HOTEND_COLORS[0].hex,
+      side:      form.side  || cat?.side  || "right",
+      size:      form.size  || NOZZLE_SIZES[1],
+      notes:     form.notes || "",
+      printerId: modal.mode === "edit" ? form.printerId : undefined,
+      location:  modal.mode === "edit" ? form.location  : "stock",
     };
-    let updated = modal.mode === "edit"
+    const updated = modal.mode === "edit"
       ? hotends.map(h => h.id === entry.id ? entry : h)
       : [...hotends, entry];
-    updated = applyLocation(updated, entry.id, entry.location);
     onSave(updated);
     setModal(null);
   };
 
   const handleDelete = (id) => { onSave(hotends.filter(h => h.id !== id)); setConfirm(null); };
+  const handleDuplicate = (item) => {
+    const copy = { ...item, id: uid(), printerId: undefined, location: "stock" };
+    onSave([...hotends, copy]);
+  };
   const catForForm = HOTENDS.find(h => h.id === form.catalogId);
 
-  const locColor = (loc) =>
-    loc === "vortek" ? "#6366f1" : loc === "left" ? "#06b6d4" : T.dim;
-
-  const SLOTS = [
-    { key: "left",   label: t("inv.hotend.slotLeft"),   icon: "◀", desc: t("inv.hotend.slotLeftDesc") },
-    { key: "vortek", label: t("inv.hotend.slotVortek"), icon: "V", desc: t("inv.hotend.slotVortekDesc") },
-  ];
+  const knownPrinters = printers
+    .map(p => ({ printer: p, kind: printerKind(p) }))
+    .filter(x => x.kind);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
 
-      {/* ── Config H2C ── */}
+      {/* ── Config des imprimantes connues ── */}
       <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: "18px 20px" }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: T.dim, textTransform: "uppercase", letterSpacing: "0.09em", marginBottom: 14 }}>
           {t("inv.hotend.configTitle")}
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          {SLOTS.map(slot => {
-            const installed = slot.key === "left" ? left : vortek;
-            return (
-              <div key={slot.key} style={{
-                border: `2px solid ${installed ? installed.color + "80" : T.border}`,
-                borderRadius: 10, padding: "14px 16px",
-                background: installed ? installed.color + "0c" : T.surface,
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                  <div style={{
-                    width: 30, height: 30, borderRadius: 8,
-                    background: installed ? installed.color + "22" : T.overlay2,
-                    border: `1px solid ${installed ? installed.color + "50" : T.border}`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 14, fontWeight: 800,
-                    color: installed ? installed.color : T.dim,
-                  }}>{slot.icon}</div>
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: T.text }}>{slot.label}</div>
-                    <div style={{ fontSize: 10, color: T.dim }}>{slot.desc}</div>
-                  </div>
-                </div>
 
-                {installed ? (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                      <div style={{ width: 10, height: 10, borderRadius: 3, background: installed.color, flexShrink: 0 }} />
-                      <div style={{ fontSize: 13, fontWeight: 700, color: T.text }}>{installed.name}</div>
-                    </div>
-                    {installed.notes && <div style={{ fontSize: 11, color: T.dim }}>{installed.notes}</div>}
-                    <div style={{ display: "flex", gap: 6 }}>
-                      <button onClick={() => openEdit(installed)} style={{
-                        padding: "4px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
-                        background: T.accentLo, border: `1px solid ${T.accentBd}`, color: "#7182d6",
-                      }}>{t("inv.hotend.modify")}</button>
-                      <button onClick={() => setLocation(installed.id, "stock")} style={{
-                        padding: "4px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11, fontWeight: 600,
-                        background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", color: "#f87171",
-                      }}>{t("inv.hotend.remove")}</button>
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    <div style={{ fontSize: 12, color: T.dim }}>{t("inv.hotend.none")}</div>
-                    {inStock.length > 0 ? (
-                      <select
-                        key={inStock.map(h => h.id).join(",")}
-                        defaultValue=""
-                        onChange={e => { if (e.target.value) setLocation(e.target.value, slot.key); }}
-                        style={{
-                          padding: "5px 8px", borderRadius: 7, fontSize: 11, cursor: "pointer",
-                          background: T.surface, border: `1px solid ${T.border}`, color: T.muted, outline: "none",
-                        }}
-                      >
-                        <option value="">{t("inv.hotend.installFromStock")}</option>
-                        {inStock.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
-                      </select>
-                    ) : (
-                      <div style={{ fontSize: 11, color: T.dim, fontStyle: "italic" }}>{t("inv.hotend.noStock")}</div>
-                    )}
-                  </div>
-                )}
+        {knownPrinters.length === 0 ? (
+          <div style={{ fontSize: 12, color: T.dim, fontStyle: "italic" }}>{t("inv.hotend.configEmpty")}</div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {knownPrinters.map(({ printer, kind }) => (
+              <div key={printer.id}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: T.text, marginBottom: 8 }}>
+                  🖨️ {printer.name || printer.model}
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: 12 }}>
+                  {slotsForKind(kind, t).map(slot => {
+                    const installed = hotends.find(h => h.printerId === printer.id && h.location === slot.key);
+                    return (
+                      <div key={slot.key} style={{
+                        border: `2px solid ${installed ? installed.color + "80" : T.border}`,
+                        borderRadius: 10, padding: "12px 14px",
+                        background: installed ? installed.color + "0c" : T.surface,
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                          <div style={{
+                            width: 28, height: 28, borderRadius: 8,
+                            background: installed ? installed.color + "22" : T.overlay2,
+                            border: `1px solid ${installed ? installed.color + "50" : T.border}`,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: 13, fontWeight: 800,
+                            color: installed ? installed.color : T.dim,
+                            flexShrink: 0,
+                          }}>{slot.icon}</div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: T.text }}>{slot.label}</div>
+                            {slot.desc && <div style={{ fontSize: 9, color: T.dim }}>{slot.desc}</div>}
+                          </div>
+                        </div>
+
+                        {installed ? (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <div style={{ width: 9, height: 9, borderRadius: 3, background: installed.color, flexShrink: 0 }} />
+                              <div style={{ fontSize: 12, fontWeight: 700, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{installed.name}</div>
+                            </div>
+                            {installed.size && <div style={{ fontSize: 10, color: T.dim }}>{installed.size}</div>}
+                            <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                              <button onClick={() => openEdit(installed)} style={{
+                                padding: "3px 8px", borderRadius: 6, cursor: "pointer", fontSize: 10, fontWeight: 600,
+                                background: T.accentLo, border: `1px solid ${T.accentBd}`, color: "#7182d6",
+                              }}>{t("inv.hotend.modify")}</button>
+                              <button onClick={() => removeFromSlot(installed.id)} style={{
+                                padding: "3px 8px", borderRadius: 6, cursor: "pointer", fontSize: 10, fontWeight: 600,
+                                background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", color: "#f87171",
+                              }}>{t("inv.hotend.remove")}</button>
+                            </div>
+                          </div>
+                        ) : (() => {
+                          const slotStock = inStockForSlot(slot.key);
+                          return (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                              <div style={{ fontSize: 11, color: T.dim }}>{t("inv.hotend.none")}</div>
+                              {slotStock.length > 0 ? (
+                                <select
+                                  key={slotStock.map(h => h.id).join(",")}
+                                  defaultValue=""
+                                  onChange={e => { if (e.target.value) assignSlot(e.target.value, printer.id, slot.key); }}
+                                  style={{
+                                    padding: "5px 6px", borderRadius: 7, fontSize: 10, cursor: "pointer",
+                                    background: T.surface, border: `1px solid ${T.border}`, color: T.muted, outline: "none",
+                                  }}
+                                >
+                                  <option value="">{t("inv.hotend.installFromStock")}</option>
+                                  {slotStock.map(h => <option key={h.id} value={h.id}>{h.name}{h.size ? ` · ${h.size}` : ""}</option>)}
+                                </select>
+                              ) : (
+                                <div style={{ fontSize: 10, color: T.dim, fontStyle: "italic" }}>{t("inv.hotend.noStock")}</div>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── List ── */}
@@ -254,8 +389,8 @@ function HotendsTab({ hotends, onSave }) {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
           {hotends.map(h => {
-            const lc = locColor(h.location);
-            const locLabel = h.location === "vortek" ? "Vortek" : h.location === "left" ? "Gauche" : "Stock";
+            const installed = h.location && h.location !== "stock";
+            const badgeColor = installed ? "#6366f1" : T.dim;
             return (
               <div key={h.id} style={{
                 background: T.card, border: `1px solid ${T.border}`,
@@ -264,22 +399,21 @@ function HotendsTab({ hotends, onSave }) {
               }}>
                 <div style={{ width: 12, height: 12, borderRadius: 3, background: h.color, flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{h.name}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {h.name}{h.size ? ` · ${h.size}` : ""}
+                  </div>
                   {h.notes && <div style={{ fontSize: 11, color: T.dim, marginTop: 2 }}>{h.notes}</div>}
                 </div>
-                <select
-                  value={h.location}
-                  onChange={e => setLocation(h.id, e.target.value)}
-                  style={{
-                    padding: "4px 8px", borderRadius: 7, fontSize: 11, cursor: "pointer",
-                    background: lc + "15", border: `1px solid ${lc}35`, color: lc,
-                    fontWeight: 700, outline: "none", flexShrink: 0,
-                  }}
-                >
-                  <option value="stock"  style={{ background: "var(--color-card)", color: "var(--color-text)" }}>{t("inv.hotend.locStock")}</option>
-                  <option value="vortek" style={{ background: "var(--color-card)", color: "var(--color-text)" }}>{t("inv.hotend.locVortek")}</option>
-                  <option value="left"   style={{ background: "var(--color-card)", color: "var(--color-text)" }}>{t("inv.hotend.locLeft")}</option>
-                </select>
+                <span style={{
+                  padding: "4px 10px", borderRadius: 20, fontSize: 10, fontWeight: 700, flexShrink: 0,
+                  background: badgeColor + "15", border: `1px solid ${badgeColor}35`, color: badgeColor,
+                  whiteSpace: "nowrap",
+                }}>{locationLabel(h, printers, t)}</span>
+                <button onClick={() => handleDuplicate(h)} title={t("inv.hotend.duplicate")} style={{
+                  width: 28, height: 28, borderRadius: 7, cursor: "pointer",
+                  background: T.accentLo, border: `1px solid ${T.accentBd}`,
+                  color: "#7182d6", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center",
+                }}>📋</button>
                 <button onClick={() => openEdit(h)} style={{
                   width: 28, height: 28, borderRadius: 7, cursor: "pointer",
                   background: T.accentLo, border: `1px solid ${T.accentBd}`,
@@ -302,7 +436,7 @@ function HotendsTab({ hotends, onSave }) {
           <Field label={t("inv.field.catalogModel")}>
             <Sel value={form.catalogId} onChange={v => {
               const cat = HOTENDS.find(h => h.id === v);
-              setForm(f => ({ ...f, catalogId: v, name: cat?.name?.[lang] || f.name, color: cat?.color || f.color }));
+              setForm(f => ({ ...f, catalogId: v, name: cat?.name?.[lang] || f.name, color: cat?.color || f.color, side: cat?.side || f.side }));
             }}>
               {HOTENDS.map(h => <option key={h.id} value={h.id}>{h.name[lang]}</option>)}
               <option value="custom">{t("inv.custom")}</option>
@@ -313,20 +447,20 @@ function HotendsTab({ hotends, onSave }) {
           </Field>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <Field label={t("inv.field.color")}>
-              <div style={{ display: "flex", gap: 6 }}>
-                <input type="color" value={form.color || "#6366f1"} onChange={e => setForm(f => ({ ...f, color: e.target.value }))}
-                  style={{ width: 36, height: 34, borderRadius: 7, border: `1px solid ${T.border}`, cursor: "pointer", background: "none", flexShrink: 0 }} />
-                <Inp value={form.color} onChange={v => setForm(f => ({ ...f, color: v }))} placeholder="#6366f1" />
-              </div>
+              <ColorSwatchPicker value={form.color} onChange={v => setForm(f => ({ ...f, color: v }))} lang={lang} />
             </Field>
-            <Field label={t("inv.field.location")}>
-              <Sel value={form.location} onChange={v => setForm(f => ({ ...f, location: v }))}>
-                <option value="stock">{t("inv.hotend.locStock")}</option>
-                <option value="vortek">{t("inv.hotend.slotVortek")}</option>
-                <option value="left">{t("inv.hotend.slotLeft")}</option>
+            <Field label={t("inv.field.size")}>
+              <Sel value={form.size} onChange={v => setForm(f => ({ ...f, size: v }))}>
+                {NOZZLE_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
               </Sel>
             </Field>
           </div>
+          <Field label={t("inv.field.side")}>
+            <Sel value={form.side || "right"} onChange={v => setForm(f => ({ ...f, side: v }))} disabled={form.catalogId !== "custom"}>
+              <option value="left">{t("inv.hotend.locLeft")}</option>
+              <option value="right">{t("inv.hotend.locRight")}</option>
+            </Sel>
+          </Field>
           <Field label={t("inv.field.notes")}>
             <Inp value={form.notes} onChange={v => setForm(f => ({ ...f, notes: v }))} placeholder={t("inv.hotend.notesPlaceholder")} />
           </Field>
